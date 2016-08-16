@@ -33,13 +33,15 @@ utility_scripts.php --list
 
 ### git:add-ref-to-commit-msg
 
-Usage
+Automatically adds task reference to commit message from current branch name.
+
+#### Usage
 
 ````bash
 utility_scripts.php git:add-ref-to-commit-msg COMMIT_MSG_FILE
 ````
 
-Help
+#### Help
 
 ````bash
 utility_scripts.php git:add-ref-to-commit-msg --help
