@@ -1,0 +1,24 @@
+{
+    "name": "org.majkel/utility_scripts",
+    "description": "Utility scripts",
+    "minimum-stability": "stable",
+    "license": "MIT",
+    "version": "0.1",
+    "type": "library",
+    "keywords": ["git", "utility", "scripts"],
+    "autoload": {
+        "psr-4": {
+            "org\\majkel\\utility_scripts\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Michał Kowalik",
+            "email": "maf.michal@gmail.com"
+        }
+    ],
+    "prefer-stable": true,
+    "require": {
+        "symfony/console": "^3.1"
+    }
+}
