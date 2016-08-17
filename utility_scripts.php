@@ -6,7 +6,7 @@
  * Date: 16.08.16 21:59
  */
 
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
 
