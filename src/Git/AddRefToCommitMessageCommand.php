@@ -116,7 +116,7 @@ class AddRefToCommitMessageCommand extends Command
 
         $taskId = $this->getTaskId($currentGitBranch, $this->getBranchPatters($input));
         if (!$taskId) {
-            $this->error($output, "Invalid branch name `$currentGitBranch`");
+            $this->error($output, "Invalid branch name `$currentGitBranch`. Run git commit with -n flag eg. git commit -n -m 'commit message'");
             return 4;
         }
         if ($output->isVerbose()) {
