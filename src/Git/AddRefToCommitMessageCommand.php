@@ -12,6 +12,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use InvalidArgumentException;
 
 /**
  * Class AddRefToCommitMessageCommand
@@ -27,16 +28,41 @@ class AddRefToCommitMessageCommand extends Command
     {
         $this->setName('git:add-ref-to-commit-msg');
         $this->setDescription('Add task reference to commit message.');
-        $this->addArgument('commitMessageFile', InputArgument::OPTIONAL, 'Path to commit message file',
-            '.git/COMMIT_EDITMSG');
-        $this->addOption('skipBranches', 's', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
-            'List of patterns matching branches to skip', ['#^(master|develop|dev)$#i']);
-        $this->addOption('branchPatterns', 'b', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
-            'List of patterns matching branches from witch to extract task ref',
-            ['#^(hotfix/|task/|bug/|feature/|issue/|bugfix/|story/|epic/)?(?<TASK_ID>[\d]+)#i']);
-        $this->addOption('pattern', 'p', InputOption::VALUE_REQUIRED,
+        $this->addArgument(
+            'commitMessageFile',
+            InputArgument::OPTIONAL,
+            'Path to commit message file',
+            '.git/COMMIT_EDITMSG'
+        );
+        $this->addOption(
+            'skipBranches',
+            's',
+            InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
+            'List of patterns matching branches to skip',
+            ['#^(master|develop|dev)$#i']
+        );
+
+        $this->addOption(
+            'branchPatterns',
+            'b',
+            InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
+            'List of patterns matching branches from witch to extract task ref. Has to contain {TASK_ID} phrase',
+            ['#^(hotfix/|task/|bug/|feature/|issue/|bugfix/|story/|epic/)?{TASK_ID}#i']
+        );
+        $this->addOption(
+            'pattern',
+            'p',
+            InputOption::VALUE_REQUIRED,
             'Commit message pattern (available variables {TASK_ID},{COMMIT_MESSAGE})',
-            'refs #{TASK_ID} {COMMIT_MESSAGE}');
+            '{TASK_ID} {COMMIT_MESSAGE}'
+        );
+        $this->addOption(
+            'taskPattern',
+            't',
+            InputOption::VALUE_REQUIRED,
+            'Task ID pattern',
+            '[A-Z]+\-\d+'
+        );
         $this->setHelp('
     Installation:
 
@@ -88,7 +114,7 @@ class AddRefToCommitMessageCommand extends Command
             return 0;
         }
 
-        $taskId = $this->getTaskId($currentGitBranch, $input->getOption('branchPatterns'));
+        $taskId = $this->getTaskId($currentGitBranch, $this->getBranchPatters($input));
         if (!$taskId) {
             $this->error($output, "Invalid branch name `$currentGitBranch`");
             return 4;
@@ -105,7 +131,7 @@ class AddRefToCommitMessageCommand extends Command
         $currentCommitMessage = file_get_contents($commitMessageFile);
         $commitMsgPattern = str_replace(
             [$this->quote('{TASK_ID}'), $this->quote('{COMMIT_MESSAGE}')],
-            ['[\d]+', '.*'],
+            [$input->getOption('taskPattern'), '.*'],
             $this->quote($commitMessagePattern)
         );
 
@@ -177,5 +203,21 @@ class AddRefToCommitMessageCommand extends Command
     private function error(OutputInterface $output, $message)
     {
         $output->writeln("<error>$message</error>");
+    }
+
+    /**
+     * @param InputInterface $input
+     * @return mixed
+     */
+    private function getBranchPatters(InputInterface $input)
+    {
+        $branchPatterns = $input->getOption('branchPatterns');
+        foreach ($branchPatterns as $i => $branchPattern) {
+            if (strpos($branchPattern, '{TASK_ID}') === false) {
+                throw new InvalidArgumentException("Missing {TASK_ID} in branchPatterns[{$i}]");
+            }
+            $branchPatterns[$i] = str_replace('{TASK_ID}', "(?<TASK_ID>{$input->getOption('taskPattern')})", $branchPattern);
+        }
+        return $branchPatterns;
     }
 }
